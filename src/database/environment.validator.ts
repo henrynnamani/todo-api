@@ -11,4 +11,8 @@ export const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test'], {
     message: "NODE_ENV must be one of 'development', 'production', or 'test'",
   }),
+  JWT_SECRET: z.string().min(1, { message: 'JWT_SECRET is required' }),
+  JWT_ACCESS_EXPIRY: z
+    .string()
+    .min(1, { message: 'JWT_ACCESS_EXPIRY is required' }),
 });

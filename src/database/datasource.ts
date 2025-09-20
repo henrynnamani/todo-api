@@ -1,10 +1,13 @@
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
+import * as glob from 'glob';
 import * as path from 'path';
 
-config();
-
 const isProduction = process.env.NODE_ENV === 'production';
+
+const env = process.env.NODE_ENV || 'development';
+
+config({ path: `.env.${env}` });
 
 const datasource = new DataSource({
   type: 'postgres',
@@ -13,8 +16,8 @@ const datasource = new DataSource({
   username: process.env.DB_USERNAME,
   host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT),
-  entities: ['src/**/*.entity.{ts,js}'],
-  migrations: ['src/database/migrations/**/*.ts'],
+  entities: ['dist/**/*.entity{.ts,.js}'],
+  migrations: ['dist/database/migrations/*{.ts,.js}'],
   ssl: true,
   synchronize: false,
 });

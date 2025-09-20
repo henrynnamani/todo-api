@@ -7,7 +7,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EnvSchema } from './database/environment.validator';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TodosModule } from './todos/todos.module';
+import { JwtModule } from '@nestjs/jwt';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthGuard } from './auth/guards/auth-guard.guard';
 import datasource from './database/datasource';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 const env = process.env.NODE_ENV;
 
@@ -15,6 +19,23 @@ const env = process.env.NODE_ENV;
   imports: [
     UserModule,
     AuthModule,
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60,
+          limit: 5,
+        },
+      ],
+    }),
+    JwtModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: async (config: ConfigService) => ({
+        global: true,
+        secret: config.get<string>('JWT_SECRET'),
+        signOptions: { expiresIn: config.get<string>('JWT_ACCESS_EXPIRY') },
+      }),
+      global: true,
+    }),
     TypeOrmModule.forRootAsync({
       useFactory: async () => ({
         ...datasource.options,
@@ -45,6 +66,16 @@ const env = process.env.NODE_ENV;
     TodosModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

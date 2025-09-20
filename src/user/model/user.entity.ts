@@ -1,7 +1,8 @@
 import { BaseModel } from 'src/common/base-model';
-import { Column, Entity } from 'typeorm';
+import { Todo } from 'src/todos/model/todo.entity';
+import { Column, Entity, OneToMany } from 'typeorm';
 
-@Entity('user')
+@Entity('users')
 export class User extends BaseModel {
   @Column({
     type: 'varchar',
@@ -20,4 +21,7 @@ export class User extends BaseModel {
     nullable: false,
   })
   password: string;
+
+  @OneToMany(() => Todo, (todo) => todo.user)
+  todos: Todo[];
 }
