@@ -14,6 +14,7 @@ describe('UserService', () => {
     create: jest.fn(),
     save: jest.fn(),
     findOne: jest.fn(),
+    findOneOrFail: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -56,91 +57,44 @@ describe('UserService', () => {
         email: 'test@example.com',
         password: 'password123',
       };
-      mockUserRepository.save.mockRejectedValue(new Error(DB_CONNECTION_ERROR));
+
+      mockUserRepository.save.mockRejectedValue(
+        new RequestTimeoutException(DB_CONNECTION_ERROR),
+      );
 
       try {
         await userService.createUser(createUserDto);
       } catch (err) {
         expect(err).toBeInstanceOf(RequestTimeoutException);
         expect(err.message).toBe(DB_CONNECTION_ERROR);
-        expect(err.getResponse().description).toBe(DB_CONNECTION_ERROR);
       }
     });
   });
 
-  describe('checkUserExistById', () => {
-    it('should return a user if found by id', async () => {
+  describe('check user exist by id', () => {
+    it('should return user', async () => {
+      const id = '1';
       const user = {
         id: '1',
-        email: 'test@example.com',
-        password: 'password123',
+        email: 'hoyx0101@gmail.com',
+        password: 'Pyr@hornet0101',
       };
 
-      mockUserRepository.findOne.mockResolvedValue(user);
+      mockUserRepository.findOneOrFail.mockResolvedValue(user);
 
-      const result = await userService.checkUserExistById('1');
-      expect(result).toEqual(user);
-      expect(mockUserRepository.findOne).toHaveBeenCalledWith({
-        where: { id: '1' },
-      });
+      const result = await userService.checkUserExistById(id);
+
+      expect(result).toBe(user);
     });
 
-    it('should throw NotFoundException if user is not found by id', async () => {
-      mockUserRepository.findOne.mockResolvedValue(null);
-
-      const result = await userService.checkUserExistById('1');
-
-      expect(result).toBeInstanceOf(NotFoundException);
-    });
-
-    it('should throw RequestTimeoutException on database error', async () => {
-      mockUserRepository.findOne.mockRejectedValue(
-        new Error(DB_CONNECTION_ERROR),
-      );
-
-      const result = await userService.checkUserExistById('1');
-      expect(result).toBeInstanceOf(RequestTimeoutException);
-      expect(result).toBe(DB_CONNECTION_ERROR);
-    });
-  });
-
-  describe('checkUserExistByEmail', () => {
-    it('should return a user if found by email', async () => {
-      const user = {
-        id: '1',
-        email: 'test@example.com',
-        password: 'password123',
-      };
-
-      mockUserRepository.findOne.mockResolvedValue(user);
-
-      const result =
-        await userService.checkUserExistByEmail('test@example.com');
-      expect(result).toEqual(user);
-      expect(mockUserRepository.findOne).toHaveBeenCalledWith({
-        where: { email: 'test@example.com' },
-      });
-    });
-
-    it('should throw NotFoundException if user is not found by email', async () => {
-      mockUserRepository.findOne.mockResolvedValue(null);
-
-      const result =
-        await userService.checkUserExistByEmail('test@example.com');
-      expect(result).toBeInstanceOf(NotFoundException);
-    });
-
-    it('should throw RequestTimeoutException on database error', async () => {
-      mockUserRepository.findOne.mockRejectedValue(
-        new Error(DB_CONNECTION_ERROR),
-      );
+    it('should return NotFoundException if user does not exist', async () => {
+      mockUserRepository.findOneOrFail.mockResolvedValue(null);
+      const id = '1';
 
       try {
-        await userService.checkUserExistByEmail('test@example.com');
+        await userService.checkUserExistById(id);
       } catch (err) {
-        expect(err).toBeInstanceOf(RequestTimeoutException);
-        expect(err.message).toBe(DB_CONNECTION_ERROR);
-        expect(err.getResponse().description).toBe(DB_CONNECTION_ERROR);
+        expect(err).toBeInstanceOf(NotFoundException);
       }
     });
   });

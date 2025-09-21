@@ -11,8 +11,6 @@ import { DB_CONNECTION_ERROR } from 'src/common/system-message';
 import { GetTodosDto } from './dto/get-todos.dto';
 import { PaginationService } from 'src/common/pagination/pagination.service';
 import { UpdateTodoDto } from './dto/update-todo.dto';
-import { UserService } from 'src/user/user.service';
-import { User } from 'src/user/model/user.entity';
 
 @Injectable()
 export class TodosService {
@@ -20,7 +18,6 @@ export class TodosService {
     @InjectRepository(Todo)
     private readonly todoRepository: Repository<Todo>,
     private readonly paginationService: PaginationService,
-    private readonly userService: UserService,
   ) {}
 
   async createTodo(createTodoDto: CreateTodoDto, userId: string) {
@@ -32,7 +29,9 @@ export class TodosService {
 
       const newTodo = await this.todoRepository.save(todo);
 
-      return newTodo;
+      const { user, ...todoWithoutUser } = newTodo;
+
+      return todoWithoutUser;
     } catch (err) {
       throw new RequestTimeoutException(err, {
         description: DB_CONNECTION_ERROR,

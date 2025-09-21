@@ -30,7 +30,7 @@ export class UserService {
 
   async checkUserExistById(id: string) {
     try {
-      const user = await this.userRepository.findOne({
+      const user = await this.userRepository.findOneOrFail({
         where: { id },
       });
 
@@ -48,17 +48,12 @@ export class UserService {
 
   async checkUserExistByEmail(email: string) {
     try {
-      const user = await this.userRepository.findOne({
+      const user = await this.userRepository.findOneOrFail({
         where: { email },
       });
-
-      if (!user) {
-        throw new NotFoundException();
-      }
-
       return user;
     } catch (err) {
-      throw new RequestTimeoutException(err, {
+      throw new NotFoundException(err, {
         description: DB_CONNECTION_ERROR,
       });
     }
